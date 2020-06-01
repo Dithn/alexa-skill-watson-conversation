@@ -19,87 +19,18 @@
 const chai = require('chai');
 const rewire = require('rewire');
 const sinon = require('sinon');
-const sinonTest = require('sinon-test');
+const sinonTest = require('sinon-test')(sinon, { useFakeTimers: false });
 const AssistantV1 = require('ibm-watson/assistant/v1');
+const { IamAuthenticator } = require('ibm-watson/auth');
 
 const main = rewire('../../main.js'); // For testing private functions
 const expect = chai.expect;
-sinon.test = sinonTest.configureTest(sinon, { useFakeTimers: false }); // For using sinon.test with async.
-
-const narrative = 'It was a dark and stormy night.';
-
-describe('test actionHandler()', function() {
-  const actionHandler = main.__get__('actionHandler');
-
-  const fakeOpenWhisk = function() {
-    return {
-      actions: {
-        invoke: sinon.stub().returns(
-          Promise.resolve({
-            response: {
-              result: {
-                forecasts: [
-                  {
-                    narrative: narrative
-                  }
-                ]
-              }
-            }
-          })
-        )
-      },
-      packages: {
-        list: sinon.stub().returns(
-          Promise.resolve([
-            { name: 'test-other', binding: {} },
-            {
-              name: 'Whatevr_Weather Company Data-credentials123',
-              namespace: 'test-namespace',
-              binding: { name: 'weather' }
-            }
-          ])
-        )
-      }
-    };
-  };
-
-  main.__set__('myOpenWhisk', fakeOpenWhisk);
-  const TEST_INPUT = { output: {} };
-  const TEST_INPUT_ACTION = {
-    output: {
-      action: 'lookupWeather',
-      location: 'test location',
-      text: ['one', 'two', 'three']
-    }
-  };
-
-  it(
-    'test actionHandler without action returns no change',
-    sinon.test(function(done) {
-      actionHandler({}, TEST_INPUT).then(result => {
-        expect(result).to.deep.equal(TEST_INPUT);
-        done();
-      });
-    })
-  );
-  it(
-    'test actionHandler with action adds narrative',
-    sinon.test(function(done) {
-      actionHandler({}, TEST_INPUT_ACTION).then(result => {
-        expect(result.output.action).to.equal('lookupWeather');
-        expect(result.output.location).to.equal('test location');
-        expect(result.output.text).to.deep.equal(['one', 'two', 'three', narrative]);
-        done();
-      });
-    })
-  );
-});
 
 describe('test assistantMessage()', function() {
   const assistantMessage = main.__get__('assistantMessage');
   let message;
   let assistant;
-  const contextOut = { context: { test: 'testcontext' } };
+  const contextOut = { result: { context: { test: 'testcontext' } } };
   const err = null;
   const WS_ID = 'ws-id-to-find';
   const TEST_INPUT = 'test input text';
@@ -110,10 +41,9 @@ describe('test assistantMessage()', function() {
     main.__set__(
       'assistant',
       new AssistantV1({
-        username: 'fake',
-        password: 'fake',
-        url: 'fake',
-        version: '2019-07-16'
+        version: '2020-02-02',
+        authenticator: new IamAuthenticator({ apikey: 'fake' }),
+        serviceUrl: 'fake'
       })
     );
     assistant = main.__get__('assistant');
@@ -123,10 +53,10 @@ describe('test assistantMessage()', function() {
 
   it(
     'test assistantMessage without intent',
-    sinon.test(function(done) {
+    sinonTest(function(done) {
       assistantMessage({}, WS_ID).then(result => {
         expect(result).to.deep.equal(contextOut);
-        sinon.assert.calledWithMatch(message, { context: TEST_CONTEXT, input: { text: 'start skill' }, workspace_id: WS_ID });
+        sinon.assert.calledWithMatch(message, { context: TEST_CONTEXT, input: { text: 'start skill' }, workspaceId: WS_ID });
         done();
       });
     })
@@ -134,10 +64,10 @@ describe('test assistantMessage()', function() {
 
   it(
     'test assistantMessage with intent',
-    sinon.test(function(done) {
+    sinonTest(function(done) {
       assistantMessage({ intent: { slots: { EveryThingSlot: { value: TEST_INPUT } } } }, WS_ID).then(result => {
         expect(result).to.deep.equal(contextOut);
-        sinon.assert.calledWithMatch(message, { context: TEST_CONTEXT, input: { text: TEST_INPUT }, workspace_id: WS_ID });
+        sinon.assert.calledWithMatch(message, { context: TEST_CONTEXT, input: { text: TEST_INPUT }, workspaceId: WS_ID });
         done();
       });
     })
@@ -147,7 +77,7 @@ describe('test assistantMessage()', function() {
 describe('test main()', function() {
   it(
     'test main no __ow_body',
-    sinon.test(function(done) {
+    sinonTest(function(done) {
       main
         .main({})
         .then(result => {

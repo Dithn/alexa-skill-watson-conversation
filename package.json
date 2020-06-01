@@ -13,23 +13,20 @@
   "repository": "github:IBM/alexa-skill-watson-conversation",
   "dependencies": {
     "alexa-verifier": "^2.0.1",
-    "ibm-watson": "^4.2.2",
-    "openwhisk": "^3.19.0",
-    "redis": "^2.8.0",
-    "request": "^2.88.0"
+    "ibm-watson": "^5.3.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "eslint": "^6.0.1",
-    "eslint-config-google": "^0.13.0",
-    "eslint-config-prettier": "^6.0.0",
-    "eslint-plugin-node": "^9.1.0",
-    "eslint-plugin-prettier": "^3.1.0",
+    "eslint": "^6.8.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-prettier": "^3.1.2",
     "istanbul": "^0.4.5",
-    "mocha": "^6.1.4",
-    "prettier": "^1.18.2",
+    "mocha": "^7.0.1",
+    "prettier": "^1.19.1",
     "rewire": "^4.0.1",
-    "sinon": "^7.3.2",
-    "sinon-test": "^2.4.0"
+    "sinon": "^8.1.1",
+    "sinon-test": "^2.4.2"
   }
 }
